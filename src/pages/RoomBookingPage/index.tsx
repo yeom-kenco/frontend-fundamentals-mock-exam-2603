@@ -1,10 +1,8 @@
 import { css } from '@emotion/react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Top, Spacing, Border, Button, Text, Select } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
-import { getRooms, getReservations, createReservation } from 'pages/remotes';
 import axios from 'axios';
 import { EQUIPMENT_LABELS, ALL_EQUIPMENT, TIME_SLOTS } from 'constants/index';
 import { formatDate } from 'utils/date';
@@ -12,10 +10,11 @@ import { useBookingFilter } from 'hooks/useBookingFilter';
 import { filterAvailableRooms } from '../../domain/reservation';
 import { AvailableRoomList } from '../components/AvailableRoomList';
 import { validateBookingTime } from 'utils/validation';
+import { useRooms } from 'hooks/queries/useRooms';
+import { useCreateReservation, useReservations } from 'hooks/queries/useReservations';
 
 export function RoomBookingPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const {
     date,
@@ -35,21 +34,9 @@ export function RoomBookingPage() {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const { data: rooms = [] } = useQuery(['rooms'], getRooms);
-  const { data: reservations = [] } = useQuery(['reservations', date], () => getReservations(date), {
-    enabled: !!date,
-  });
-
-  const createMutation = useMutation(
-    (data: { roomId: string; date: string; start: string; end: string; attendees: number; equipment: string[] }) =>
-      createReservation(data),
-    {
-      onSuccess: (_data, variables) => {
-        queryClient.invalidateQueries(['reservations', variables.date]);
-        queryClient.invalidateQueries(['myReservations']);
-      },
-    }
-  );
+  const { data: rooms = [] } = useRooms();
+  const { data: reservations = [] } = useReservations(date);
+  const createMutation = useCreateReservation();
 
   // 필터 변경 시 선택 초기화
   const handleFilterChange = () => {
