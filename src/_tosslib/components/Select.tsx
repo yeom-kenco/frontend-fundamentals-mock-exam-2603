@@ -41,6 +41,8 @@ const Select = ({ className, ...rest }: Props) => {
           position: absolute;
           top: 14px;
           right: 16px;
+          /* 추가: 화살표 이미지가 마우스 클릭 이벤트를 무시하게 만들어 이미지를 클릭해도 드롭다운이 열리도록 UX 개선 */
+          pointer-events: none;
         `}
       />
     </div>
