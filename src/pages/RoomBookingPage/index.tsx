@@ -1,5 +1,4 @@
 import { css } from '@emotion/react';
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Top, Spacing, Border, Button, Text, Select } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
@@ -29,24 +28,18 @@ export function RoomBookingPage() {
     setEquipment,
     preferredFloor,
     setPreferredFloor,
+    selectedRoomId,
+    setSelectedRoomId,
+    errorMessage,
+    setErrorMessage,
+    validationError,
+    isFilterComplete,
+    handleFilterChange,
   } = useBookingFilter();
-
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { data: rooms = [] } = useRooms();
   const { data: reservations = [] } = useReservations(date);
   const createMutation = useCreateReservation();
-
-  // 필터 변경 시 선택 초기화
-  const handleFilterChange = () => {
-    setSelectedRoomId(null);
-    setErrorMessage(null);
-  };
-
-  // 입력 검증
-  const validationError = validateBookingTime(startTime, endTime, attendees);
-  const isFilterComplete = startTime !== '' && endTime !== '' && !validationError;
 
   // 필터링
   const floors = [...new Set(rooms.map((r: { floor: number }) => r.floor))].sort((a: number, b: number) => a - b);

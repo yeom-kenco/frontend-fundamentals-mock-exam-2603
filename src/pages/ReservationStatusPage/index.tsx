@@ -8,6 +8,7 @@ import { formatDate, timeToMinutes } from 'utils/date';
 import { MyReservationList } from '../components/MyReservationList';
 import { useRooms } from 'hooks/queries/useRooms';
 import { useCancelReservation, useMyReservations, useReservations } from 'hooks/queries/useReservations';
+import { MessageBanner } from 'pages/components/MessageBanner';
 
 export function ReservationStatusPage() {
   const navigate = useNavigate();
@@ -290,33 +291,7 @@ export function ReservationStatusPage() {
       <Spacing size={24} />
 
       {/* 메시지 배너 */}
-      {message && (
-        <div
-          css={css`
-            padding: 0 24px;
-          `}
-        >
-          <div
-            css={css`
-              padding: 10px 14px;
-              border-radius: 10px;
-              background: ${message.type === 'success' ? colors.blue50 : colors.red50};
-              display: flex;
-              align-items: center;
-              gap: 8px;
-            `}
-          >
-            <Text
-              typography="t7"
-              fontWeight="medium"
-              color={message.type === 'success' ? colors.blue600 : colors.red500}
-            >
-              {message.text}
-            </Text>
-          </div>
-          <Spacing size={12} />
-        </div>
-      )}
+      <MessageBanner message={message} />
 
       {/* 내 예약 목록 */}
       <div

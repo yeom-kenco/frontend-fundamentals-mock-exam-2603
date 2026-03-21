@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { formatDate } from 'utils/date';
+import { validateBookingTime } from 'utils/validation';
 
 export function useBookingFilter() {
   const [searchParams, setSearchParams] = useSearchParams();
-
   const [date, setDate] = useState(searchParams.get('date') || formatDate(new Date()));
   const [startTime, setStartTime] = useState(searchParams.get('startTime') || '');
   const [endTime, setEndTime] = useState(searchParams.get('endTime') || '');
@@ -15,6 +15,8 @@ export function useBookingFilter() {
   const [preferredFloor, setPreferredFloor] = useState<number | null>(
     searchParams.get('floor') ? Number(searchParams.get('floor')) : null
   );
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // URL 쿼리 파라미터 동기화
   useEffect(() => {
@@ -27,6 +29,15 @@ export function useBookingFilter() {
     if (preferredFloor !== null) params.floor = String(preferredFloor);
     setSearchParams(params, { replace: true });
   }, [date, startTime, endTime, attendees, equipment, preferredFloor, setSearchParams]);
+
+  // 입력 검증 및 초기화 로직
+  const validationError = validateBookingTime(startTime, endTime, attendees);
+  const isFilterComplete = startTime !== '' && endTime !== '' && !validationError;
+
+  const handleFilterChange = () => {
+    setSelectedRoomId(null);
+    setErrorMessage(null);
+  };
 
   return {
     date,
@@ -41,5 +52,12 @@ export function useBookingFilter() {
     setEquipment,
     preferredFloor,
     setPreferredFloor,
+    selectedRoomId,
+    setSelectedRoomId,
+    errorMessage,
+    setErrorMessage,
+    validationError,
+    isFilterComplete,
+    handleFilterChange,
   };
 }
