@@ -437,7 +437,8 @@ export function ReservationStatusPage() {
           padding: 0 24px;
         `}
       >
-        <Button display="full" onClick={() => navigate('/booking')}>
+        {/* URL 쿼리 파라미터로 현재 달력에서 선택한 date를 넘김 */}
+        <Button display="full" onClick={() => navigate(`/booking?date=${date}`)}>
           예약하기
         </Button>
       </div>
