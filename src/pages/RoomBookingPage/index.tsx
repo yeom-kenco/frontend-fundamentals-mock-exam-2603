@@ -11,6 +11,7 @@ import { formatDate } from 'utils/date';
 import { useBookingFilter } from 'hooks/useBookingFilter';
 import { filterAvailableRooms } from '../../domain/reservation';
 import { AvailableRoomList } from '../components/AvailableRoomList';
+import { validateBookingTime } from 'utils/validation';
 
 export function RoomBookingPage() {
   const navigate = useNavigate();
@@ -57,16 +58,8 @@ export function RoomBookingPage() {
   };
 
   // 입력 검증
-  let validationError: string | null = null;
-  const hasTimeInputs = startTime !== '' && endTime !== '';
-  if (hasTimeInputs) {
-    if (endTime <= startTime) {
-      validationError = '종료 시간은 시작 시간보다 늦어야 합니다.';
-    } else if (attendees < 1) {
-      validationError = '참석 인원은 1명 이상이어야 합니다.';
-    }
-  }
-  const isFilterComplete = hasTimeInputs && !validationError;
+  const validationError = validateBookingTime(startTime, endTime, attendees);
+  const isFilterComplete = startTime !== '' && endTime !== '' && !validationError;
 
   // 필터링
   const floors = [...new Set(rooms.map((r: { floor: number }) => r.floor))].sort((a: number, b: number) => a - b);
