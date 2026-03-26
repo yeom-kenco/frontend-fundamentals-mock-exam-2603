@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Top, Spacing, Border, Button, Text, ListRow } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
@@ -13,20 +13,27 @@ import type { Room, Reservation } from 'types/reservation';
 
 export function ReservationStatusPage() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [date, setDate] = useState(formatDate(new Date()));
 
-  const locationState = location.state as { message?: string } | null;
+  const STATUS_MESSAGES: Record<string, string> = {
+    booked: '예약이 완료되었습니다!',
+  };
+
+  const statusFromUrl = searchParams.get('status');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    locationState?.message ? { type: 'success', text: locationState.message } : null
+    statusFromUrl && STATUS_MESSAGES[statusFromUrl]
+      ? { type: 'success', text: STATUS_MESSAGES[statusFromUrl] }
+      : null
   );
 
   useEffect(() => {
-    if (locationState?.message) {
-      window.history.replaceState({}, '');
+    if (statusFromUrl) {
+      searchParams.delete('status');
+      setSearchParams(searchParams, { replace: true });
     }
-  }, [locationState]);
+  }, [statusFromUrl, searchParams, setSearchParams]);
 
   const { data: rooms = [] } = useQuery(['rooms'], getRooms);
   const { data: reservations = [] } = useQuery(['reservations', date], () => getReservations(date), { enabled: !!date });

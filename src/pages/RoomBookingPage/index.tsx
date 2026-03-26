@@ -115,7 +115,7 @@ export function RoomBookingPage() {
       });
 
       if ('ok' in result && result.ok) {
-        navigate('/', { state: { message: '예약이 완료되었습니다!' } });
+        navigate('/?status=booked');
         return;
       }
 
