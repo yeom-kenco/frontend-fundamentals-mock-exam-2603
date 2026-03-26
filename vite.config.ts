@@ -30,6 +30,7 @@ export default defineConfig({
       models: path.resolve(__dirname, 'src/models'),
       remotes: path.resolve(__dirname, 'src/remotes'),
       styles: path.resolve(__dirname, 'src/styles'),
+      types: path.resolve(__dirname, 'src/types'),
       utils: path.resolve(__dirname, 'src/utils'),
       hooks: path.resolve(__dirname, 'src/hooks'),
       stores: path.resolve(__dirname, 'src/stores'),

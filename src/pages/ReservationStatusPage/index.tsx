@@ -9,6 +9,7 @@ import { EQUIPMENT_LABELS } from 'constants/equipment';
 import { HOUR_LABELS, TOTAL_MINUTES } from 'constants/timeSlots';
 import { formatDate } from 'utils/date';
 import { timeToMinutes } from 'utils/timeline';
+import type { Room, Reservation } from 'types/reservation';
 
 export function ReservationStatusPage() {
   const navigate = useNavigate();
@@ -49,7 +50,7 @@ export function ReservationStatusPage() {
 
   const [activeReservation, setActiveReservation] = useState<string | null>(null);
 
-  const getRoomName = (roomId: string) => rooms.find((r: { id: string; name: string }) => r.id === roomId)?.name ?? roomId;
+  const getRoomName = (roomId: string) => rooms.find((r: Room) => r.id === roomId)?.name ?? roomId;
 
   return (
     <div css={css`background: ${colors.white}; padding-bottom: 40px;`}>
@@ -119,8 +120,8 @@ export function ReservationStatusPage() {
           </div>
 
           {/* 회의실별 타임라인 */}
-          {rooms.map((room: { id: string; name: string }, index: number) => {
-            const roomReservations = reservations.filter((r: { roomId: string }) => r.roomId === room.id);
+          {rooms.map((room: Room, index: number) => {
+            const roomReservations = reservations.filter((r: Reservation) => r.roomId === room.id);
             return (
               <div
                 key={room.id}
@@ -134,7 +135,7 @@ export function ReservationStatusPage() {
                   </Text>
                 </div>
                 <div css={css`flex: 1; height: 24px; background: ${colors.white}; border-radius: 6px; position: relative; overflow: visible;`}>
-                  {roomReservations.map((res: { id: string; start: string; end: string; attendees: number; equipment: string[] }) => {
+                  {roomReservations.map((res: Reservation) => {
                     const left = (timeToMinutes(res.start) / TOTAL_MINUTES) * 100;
                     const width = ((timeToMinutes(res.end) - timeToMinutes(res.start)) / TOTAL_MINUTES) * 100;
                     const isActive = activeReservation === res.id;
@@ -225,7 +226,7 @@ export function ReservationStatusPage() {
           </div>
         ) : (
           <div css={css`display: flex; flex-direction: column; gap: 10px;`}>
-            {myReservationList.map((res: { id: string; roomId: string; date: string; start: string; end: string; attendees: number; equipment: string[] }) => (
+            {myReservationList.map((res: Reservation) => (
               <div
                 key={res.id}
                 css={css`padding: 14px 16px; border-radius: 14px; background: ${colors.grey50}; border: 1px solid ${colors.grey200};`}

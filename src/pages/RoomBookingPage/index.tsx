@@ -9,6 +9,7 @@ import axios from 'axios';
 import { EQUIPMENT_LABELS, ALL_EQUIPMENT } from 'constants/equipment';
 import { TIME_SLOTS } from 'constants/timeSlots';
 import { formatDate } from 'utils/date';
+import type { Room, Reservation, CreateReservationRequest } from 'types/reservation';
 
 export function RoomBookingPage() {
   const navigate = useNavigate();
@@ -44,8 +45,7 @@ export function RoomBookingPage() {
   const { data: reservations = [] } = useQuery(['reservations', date], () => getReservations(date), { enabled: !!date });
 
   const createMutation = useMutation(
-    (data: { roomId: string; date: string; start: string; end: string; attendees: number; equipment: string[] }) =>
-      createReservation(data),
+    (data: CreateReservationRequest) => createReservation(data),
     {
       onSuccess: (_data, variables) => {
         queryClient.invalidateQueries(['reservations', variables.date]);
@@ -73,22 +73,22 @@ export function RoomBookingPage() {
   const isFilterComplete = hasTimeInputs && !validationError;
 
   // 필터링
-  const floors = [...new Set(rooms.map((r: { floor: number }) => r.floor))].sort((a: number, b: number) => a - b);
+  const floors = [...new Set(rooms.map((r: Room) => r.floor))].sort((a: number, b: number) => a - b);
 
   const availableRooms = isFilterComplete
     ? rooms
-        .filter((room: { id: string; capacity: number; equipment: string[]; floor: number }) => {
+        .filter((room: Room) => {
           if (room.capacity < attendees) return false;
           if (!equipment.every(eq => room.equipment.includes(eq))) return false;
           if (preferredFloor !== null && room.floor !== preferredFloor) return false;
           const hasConflict = reservations.some(
-            (r: { roomId: string; date: string; start: string; end: string }) =>
+            (r: Reservation) =>
               r.roomId === room.id && r.date === date && r.start < endTime && r.end > startTime
           );
           if (hasConflict) return false;
           return true;
         })
-        .sort((a: { floor: number; name: string }, b: { floor: number; name: string }) => {
+        .sort((a: Room, b: Room) => {
           if (a.floor !== b.floor) return a.floor - b.floor;
           return a.name.localeCompare(b.name);
         })
@@ -330,7 +330,7 @@ export function RoomBookingPage() {
             </div>
           ) : (
             <div css={css`display: flex; flex-direction: column; gap: 10px;`}>
-              {availableRooms.map((room: { id: string; name: string; floor: number; capacity: number; equipment: string[] }) => {
+              {availableRooms.map((room: Room) => {
                 const isSelected = selectedRoomId === room.id;
                 return (
                   <div
