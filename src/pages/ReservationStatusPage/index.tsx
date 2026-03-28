@@ -4,7 +4,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Top, Spacing, Border, Button, Text, ListRow } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
-import { getRooms, getReservations, getMyReservations, cancelReservation } from 'pages/remotes';
+import { getMyReservations, cancelReservation } from 'pages/remotes';
+import { useReservationTimeline } from './hooks/useReservationTimeline';
 import { EQUIPMENT_LABELS } from 'constants/equipment';
 import { HOUR_LABELS, TOTAL_MINUTES } from 'constants/timeSlots';
 import { formatDate } from 'utils/date';
@@ -35,8 +36,7 @@ export function ReservationStatusPage() {
     }
   }, [statusFromUrl, searchParams, setSearchParams]);
 
-  const { data: rooms = [] } = useQuery(['rooms'], getRooms);
-  const { data: reservations = [] } = useQuery(['reservations', date], () => getReservations(date), { enabled: !!date });
+  const { rooms, reservations } = useReservationTimeline(date);
   const { data: myReservationList = [] } = useQuery(['myReservations'], getMyReservations);
 
   const cancelMutation = useMutation((id: string) => cancelReservation(id), {
