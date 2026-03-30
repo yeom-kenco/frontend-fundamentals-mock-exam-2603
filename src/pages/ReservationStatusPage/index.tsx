@@ -1,7 +1,8 @@
 import { css } from '@emotion/react';
-import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMyReservations } from './hooks/useMyReservations';
+import { useStatusMessage } from './hooks/useStatusMessage';
 import { Top, Spacing, Border, Button, Text, ListRow } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 import { useReservationTimeline } from './hooks/useReservationTimeline';
@@ -13,36 +14,18 @@ import type { Room, Reservation } from 'types/reservation';
 
 export function ReservationStatusPage() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [date, setDate] = useState(formatDate(new Date()));
 
-  const STATUS_MESSAGES: Record<string, string> = {
-    booked: '예약이 완료되었습니다!',
-  };
-
-  const statusFromUrl = searchParams.get('status');
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    statusFromUrl && STATUS_MESSAGES[statusFromUrl]
-      ? { type: 'success', text: STATUS_MESSAGES[statusFromUrl] }
-      : null
-  );
-
-  useEffect(() => {
-    if (statusFromUrl) {
-      searchParams.delete('status');
-      setSearchParams(searchParams, { replace: true });
-    }
-  }, [statusFromUrl, searchParams, setSearchParams]);
-
+  const { message, showSuccess, showError } = useStatusMessage();
   const { rooms, reservations } = useReservationTimeline(date);
   const { myReservations, cancelReservationById } = useMyReservations();
 
   const confirmAndCancelReservation = async (id: string) => {
     try {
       await cancelReservationById(id);
-      setMessage({ type: 'success', text: '예약이 취소되었습니다.' });
+      showSuccess('예약이 취소되었습니다.');
     } catch {
-      setMessage({ type: 'error', text: '취소에 실패했습니다.' });
+      showError('취소에 실패했습니다.');
     }
   };
 
