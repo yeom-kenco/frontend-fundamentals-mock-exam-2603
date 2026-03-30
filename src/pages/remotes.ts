@@ -20,3 +20,10 @@ export function getMyReservations() {
 export function cancelReservation(id: string) {
   return http.delete<{ ok: boolean }>(`/api/reservations/${id}`);
 }
+
+// 쿼리 키 중앙 관리 — 키 불일치 방지
+export const queryKeys = {
+  rooms: () => ['rooms'] as const,
+  reservations: (date: string) => ['reservations', date] as const,
+  myReservations: () => ['myReservations'] as const,
+};

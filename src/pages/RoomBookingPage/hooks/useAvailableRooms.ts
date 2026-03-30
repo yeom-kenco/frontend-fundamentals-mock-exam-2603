@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { getRooms, getReservations } from 'pages/remotes';
-import type { Room, Reservation } from 'types/reservation';
+import { getRooms, getReservations, queryKeys } from 'pages/remotes';
+import type { Room } from 'types/reservation';
 
 interface AvailableRoomsInput {
   date: string;
@@ -21,18 +21,16 @@ export function useAvailableRooms({
   preferredFloor,
   isFilterComplete,
 }: AvailableRoomsInput) {
-  const { data: rooms = [] } = useQuery<Room[]>(['rooms'], getRooms);
-  const { data: reservations = [] } = useQuery<Reservation[]>(
-    ['reservations', date],
-    () => getReservations(date),
-    { enabled: !!date }
-  );
+  const { data: rooms = [] } = useQuery(queryKeys.rooms(), getRooms);
+  const { data: reservations = [] } = useQuery(queryKeys.reservations(date), () => getReservations(date), {
+    enabled: !!date,
+  });
 
-  const floors = [...new Set(rooms.map(r => r.floor))].sort((a, b) => a - b);
+  const floors = [...new Set(rooms.map((r: Room) => r.floor))].sort((a, b) => a - b);
 
   const availableRooms = isFilterComplete
     ? rooms
-        .filter(room => {
+        .filter((room: Room) => {
           if (room.capacity < attendees) return false;
           if (!equipment.every(eq => room.equipment.includes(eq))) return false;
           if (preferredFloor !== null && room.floor !== preferredFloor) return false;
@@ -42,7 +40,7 @@ export function useAvailableRooms({
           if (hasConflict) return false;
           return true;
         })
-        .sort((a, b) => {
+        .sort((a: Room, b: Room) => {
           if (a.floor !== b.floor) return a.floor - b.floor;
           return a.name.localeCompare(b.name);
         })

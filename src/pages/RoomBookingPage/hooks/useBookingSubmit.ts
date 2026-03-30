@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { createReservation } from 'pages/remotes';
+import { createReservation, queryKeys } from 'pages/remotes';
 import type { CreateReservationRequest } from 'types/reservation';
 
 export function useBookingSubmit() {
@@ -14,8 +14,8 @@ export function useBookingSubmit() {
     (data: CreateReservationRequest) => createReservation(data),
     {
       onSuccess: (_data, variables) => {
-        queryClient.invalidateQueries(['reservations', variables.date]);
-        queryClient.invalidateQueries(['myReservations']);
+        queryClient.invalidateQueries(queryKeys.reservations(variables.date));
+        queryClient.invalidateQueries(queryKeys.myReservations());
       },
     }
   );
