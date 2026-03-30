@@ -1,22 +1,19 @@
 import { css } from '@emotion/react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Top, Spacing, Border, Button, Text, Select, ListRow } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
-import { createReservation } from 'pages/remotes';
-import axios from 'axios';
 import { EQUIPMENT_LABELS, ALL_EQUIPMENT } from 'constants/equipment';
 import { TIME_SLOTS } from 'constants/timeSlots';
 import { formatDate } from 'utils/date';
-import type { Room, CreateReservationRequest } from 'types/reservation';
+import type { Room } from 'types/reservation';
 import { useBookingSearchParams } from './hooks/useBookingSearchParams';
 import { useBookingValidation } from './hooks/useBookingValidation';
 import { useAvailableRooms } from './hooks/useAvailableRooms';
+import { useBookingSubmit } from './hooks/useBookingSubmit';
 
 export function RoomBookingPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const {
     date, startTime, endTime, attendees, equipment, preferredFloor,
@@ -24,64 +21,35 @@ export function RoomBookingPage() {
   } = useBookingSearchParams();
 
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const createMutation = useMutation(
-    (data: CreateReservationRequest) => createReservation(data),
-    {
-      onSuccess: (_data, variables) => {
-        queryClient.invalidateQueries(['reservations', variables.date]);
-        queryClient.invalidateQueries(['myReservations']);
-      },
-    }
-  );
-
-  // 필터 변경 시 선택 초기화
-  const handleFilterChange = () => {
-    setSelectedRoomId(null);
-    setErrorMessage(null);
-  };
 
   const { validationError, isFilterComplete } = useBookingValidation({ startTime, endTime, attendees });
   const { availableRooms, floors } = useAvailableRooms({
     date, startTime, endTime, attendees, equipment, preferredFloor, isFilterComplete,
   });
+  const { submitBooking, isSubmitting, errorMessage, setErrorMessage, clearError } = useBookingSubmit();
 
-  const handleBook = async () => {
+  // 필터 변경 시 선택 초기화
+  const handleFilterChange = () => {
+    setSelectedRoomId(null);
+    clearError();
+  };
+
+  const handleBookRoom = async () => {
     if (!selectedRoomId) {
       setErrorMessage('회의실을 선택해주세요.');
       return;
     }
-    if (!startTime || !endTime) {
-      setErrorMessage('시작 시간과 종료 시간을 선택해주세요.');
-      return;
-    }
 
-    try {
-      const result = await createMutation.mutateAsync({
-        roomId: selectedRoomId,
-        date,
-        start: startTime,
-        end: endTime,
-        attendees,
-        equipment,
-      });
+    const result = await submitBooking({
+      roomId: selectedRoomId,
+      date,
+      start: startTime,
+      end: endTime,
+      attendees,
+      equipment,
+    });
 
-      if ('ok' in result && result.ok) {
-        navigate('/?status=booked');
-        return;
-      }
-
-      const errResult = result as { message?: string };
-      setErrorMessage(errResult.message ?? '예약에 실패했습니다.');
-      setSelectedRoomId(null);
-    } catch (err: unknown) {
-      let serverMessage = '예약에 실패했습니다.';
-      if (axios.isAxiosError(err)) {
-        const data = err.response?.data as { message?: string } | undefined;
-        serverMessage = data?.message ?? serverMessage;
-      }
-      setErrorMessage(serverMessage);
+    if (!result.success) {
       setSelectedRoomId(null);
     }
   };
@@ -322,8 +290,8 @@ export function RoomBookingPage() {
           )}
 
           <Spacing size={16} />
-          <Button display="full" onClick={handleBook} disabled={createMutation.isLoading}>
-            {createMutation.isLoading ? '예약 중...' : '확정'}
+          <Button display="full" onClick={handleBookRoom} disabled={isSubmitting}>
+            {isSubmitting ? '예약 중...' : '확정'}
           </Button>
         </div>
       )}
