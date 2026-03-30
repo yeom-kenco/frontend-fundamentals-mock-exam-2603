@@ -3,15 +3,22 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Top, Spacing, Border, Text, Select } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
-import { EQUIPMENT_LABELS, ALL_EQUIPMENT } from 'constants/equipment';
 import { TIME_SLOTS } from 'constants/timeSlots';
 import { formatDate } from 'utils/date';
-
 import { useBookingSearchParams } from './hooks/useBookingSearchParams';
 import { useBookingValidation } from './hooks/useBookingValidation';
 import { useAvailableRooms } from './hooks/useAvailableRooms';
 import { useBookingSubmit } from './hooks/useBookingSubmit';
 import { AvailableRoomList } from './components/AvailableRoomList';
+import { FilterField } from './components/FilterField';
+import { EquipmentToggleGroup } from './components/EquipmentToggleGroup';
+
+const inputStyle = css`
+  box-sizing: border-box; font-size: 16px; font-weight: 500; line-height: 1.5; height: 48px;
+  background-color: ${colors.grey50}; border-radius: 12px; color: ${colors.grey800};
+  width: 100%; border: 1px solid ${colors.grey200}; padding: 0 16px; outline: none;
+  transition: border-color 0.15s; &:focus { border-color: ${colors.blue500}; }
+`;
 
 export function RoomBookingPage() {
   const navigate = useNavigate();
@@ -97,29 +104,20 @@ export function RoomBookingPage() {
         </Text>
         <Spacing size={16} />
 
-        {/* 날짜 */}
-        <div css={css`display: flex; flex-direction: column; gap: 6px;`}>
-          <Text as="label" typography="t7" fontWeight="medium" color={colors.grey600}>날짜</Text>
+        <FilterField label="날짜">
           <input
             type="date"
             value={date}
             min={formatDate(new Date())}
             onChange={e => { setDate(e.target.value); handleFilterChange(); }}
             aria-label="날짜"
-            css={css`
-              box-sizing: border-box; font-size: 16px; font-weight: 500; line-height: 1.5; height: 48px;
-              background-color: ${colors.grey50}; border-radius: 12px; color: ${colors.grey800};
-              width: 100%; border: 1px solid ${colors.grey200}; padding: 0 16px; outline: none;
-              transition: border-color 0.15s; &:focus { border-color: ${colors.blue500}; }
-            `}
+            css={inputStyle}
           />
-        </div>
+        </FilterField>
         <Spacing size={14} />
 
-        {/* 시간 */}
         <div css={css`display: flex; gap: 12px;`}>
-          <div css={css`display: flex; flex-direction: column; gap: 6px; flex: 1;`}>
-            <Text as="label" typography="t7" fontWeight="medium" color={colors.grey600}>시작 시간</Text>
+          <FilterField label="시작 시간">
             <Select
               value={startTime}
               onChange={e => { setStartTime(e.target.value); handleFilterChange(); }}
@@ -130,9 +128,8 @@ export function RoomBookingPage() {
                 <option key={t} value={t}>{t}</option>
               ))}
             </Select>
-          </div>
-          <div css={css`display: flex; flex-direction: column; gap: 6px; flex: 1;`}>
-            <Text as="label" typography="t7" fontWeight="medium" color={colors.grey600}>종료 시간</Text>
+          </FilterField>
+          <FilterField label="종료 시간">
             <Select
               value={endTime}
               onChange={e => { setEndTime(e.target.value); handleFilterChange(); }}
@@ -143,30 +140,22 @@ export function RoomBookingPage() {
                 <option key={t} value={t}>{t}</option>
               ))}
             </Select>
-          </div>
+          </FilterField>
         </div>
         <Spacing size={14} />
 
-        {/* 참석 인원 + 선호 층 */}
         <div css={css`display: flex; gap: 12px;`}>
-          <div css={css`display: flex; flex-direction: column; gap: 6px; flex: 1;`}>
-            <Text as="label" typography="t7" fontWeight="medium" color={colors.grey600}>참석 인원</Text>
+          <FilterField label="참석 인원">
             <input
               type="number"
               min={1}
               value={attendees}
               onChange={e => { setAttendees(Math.max(1, Number(e.target.value))); handleFilterChange(); }}
               aria-label="참석 인원"
-              css={css`
-                box-sizing: border-box; font-size: 16px; font-weight: 500; line-height: 1.5; height: 48px;
-                background-color: ${colors.grey50}; border-radius: 12px; color: ${colors.grey800};
-                width: 100%; border: 1px solid ${colors.grey200}; padding: 0 16px; outline: none;
-                transition: border-color 0.15s; &:focus { border-color: ${colors.blue500}; }
-              `}
+              css={inputStyle}
             />
-          </div>
-          <div css={css`display: flex; flex-direction: column; gap: 6px; flex: 1;`}>
-            <Text as="label" typography="t7" fontWeight="medium" color={colors.grey600}>선호 층</Text>
+          </FilterField>
+          <FilterField label="선호 층">
             <Select
               value={preferredFloor ?? ''}
               onChange={e => {
@@ -181,43 +170,14 @@ export function RoomBookingPage() {
                 <option key={f} value={f}>{f}층</option>
               ))}
             </Select>
-          </div>
+          </FilterField>
         </div>
         <Spacing size={14} />
 
-        {/* 장비 */}
-        <div>
-          <Text as="label" typography="t7" fontWeight="medium" color={colors.grey600}>필요 장비</Text>
-          <Spacing size={8} />
-          <div css={css`display: flex; gap: 8px; flex-wrap: wrap;`}>
-            {ALL_EQUIPMENT.map(eq => {
-              const selected = equipment.includes(eq);
-              return (
-                <button
-                  key={eq}
-                  type="button"
-                  onClick={() => {
-                    const next = selected ? equipment.filter(e => e !== eq) : [...equipment, eq];
-                    setEquipment(next);
-                    handleFilterChange();
-                  }}
-                  aria-label={EQUIPMENT_LABELS[eq]}
-                  aria-pressed={selected}
-                  css={css`
-                    padding: 8px 16px; border-radius: 20px;
-                    border: 1px solid ${selected ? colors.blue500 : colors.grey200};
-                    background: ${selected ? colors.blue50 : colors.grey50};
-                    color: ${selected ? colors.blue600 : colors.grey700};
-                    font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s;
-                    &:hover { border-color: ${selected ? colors.blue500 : colors.grey400}; }
-                  `}
-                >
-                  {EQUIPMENT_LABELS[eq]}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <EquipmentToggleGroup
+          selected={equipment}
+          onChange={(next) => { setEquipment(next); handleFilterChange(); }}
+        />
       </div>
 
       {validationError && (
