@@ -11,6 +11,7 @@ import { TIME_SLOTS } from 'constants/timeSlots';
 import { formatDate } from 'utils/date';
 import type { Room, Reservation, CreateReservationRequest } from 'types/reservation';
 import { useBookingSearchParams } from './hooks/useBookingSearchParams';
+import { useBookingValidation } from './hooks/useBookingValidation';
 
 export function RoomBookingPage() {
   const navigate = useNavigate();
@@ -43,17 +44,7 @@ export function RoomBookingPage() {
     setErrorMessage(null);
   };
 
-  // 입력 검증
-  let validationError: string | null = null;
-  const hasTimeInputs = startTime !== '' && endTime !== '';
-  if (hasTimeInputs) {
-    if (endTime <= startTime) {
-      validationError = '종료 시간은 시작 시간보다 늦어야 합니다.';
-    } else if (attendees < 1) {
-      validationError = '참석 인원은 1명 이상이어야 합니다.';
-    }
-  }
-  const isFilterComplete = hasTimeInputs && !validationError;
+  const { validationError, isFilterComplete } = useBookingValidation({ startTime, endTime, attendees });
 
   // 필터링
   const floors = [...new Set(rooms.map((r: Room) => r.floor))].sort((a: number, b: number) => a - b);
