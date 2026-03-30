@@ -52,36 +52,36 @@ src/
     date.ts                         # formatDate
     timeline.ts                     # timeToMinutes
   pages/
+    remotes.ts                      # API 함수 + queryKeys 중앙 관리
     ReservationStatusPage/
-      index.tsx                     # 72줄 — 안내 표지판
+      index.tsx                     # 57줄 — 안내 표지판
       hooks/
-        useReservationTimeline.ts   # 회의실 + 예약 현황 쿼리
-        useMyReservations.ts        # 내 예약 조회 + 취소
         useStatusMessage.ts         # URL status 기반 메시지 관리
       components/
         DateSelector.tsx            # 날짜 입력
-        ReservationTimeline.tsx     # 타임라인 시각화 + 툴팁
+        ReservationTimeline.tsx     # 자체 쿼리 호출 + 타임라인 시각화
         MessageBanner.tsx           # 성공/에러 메시지 배너
-        MyReservationList.tsx       # 내 예약 목록 + 취소
+        MyReservationList.tsx       # 자체 쿼리 + 취소 mutation 소유
     RoomBookingPage/
-      index.tsx                     # 207줄 — 필터 인라인 + 훅 조합
+      index.tsx                     # 97줄 — 안내 표지판
       hooks/
         useBookingSearchParams.ts   # URL → 필터 상태 (SSOT)
         useBookingValidation.ts     # 시간/인원 유효성 검증
         useAvailableRooms.ts        # 방 쿼리 + 필터링 + 정렬
-        useBookingSubmit.ts         # 예약 생성 + 에러 핸들링
+        useBookingSubmit.ts         # 필터 자체 조달 + 예약 생성
       components/
+        ReservationForm.tsx         # useBookingSearchParams 직접 소비
         FilterField.tsx             # 라벨 + 필드 레이아웃 패턴
         EquipmentToggleGroup.tsx    # 장비 토글 버튼 그룹
-        AvailableRoomList.tsx       # 가용 회의실 목록 + 확정 버튼
+        AvailableRoomList.tsx       # 자체 쿼리 호출 + 회의실 목록
 ```
 
 ### 줄 수 변화
 
 | 파일                            | Before | After     |
 | ------------------------------- | ------ | --------- |
-| ReservationStatusPage/index.tsx | 305줄  | **72줄**  |
-| RoomBookingPage/index.tsx       | 402줄  | **207줄** |
+| ReservationStatusPage/index.tsx | 305줄  | **57줄**  |
+| RoomBookingPage/index.tsx       | 402줄  | **97줄**  |
 
 ---
 
