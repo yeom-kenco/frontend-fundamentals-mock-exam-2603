@@ -1,10 +1,9 @@
 import { css } from '@emotion/react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMyReservations } from './hooks/useMyReservations';
 import { Top, Spacing, Border, Button, Text, ListRow } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
-import { getMyReservations, cancelReservation } from 'pages/remotes';
 import { useReservationTimeline } from './hooks/useReservationTimeline';
 import { EQUIPMENT_LABELS } from 'constants/equipment';
 import { HOUR_LABELS, TOTAL_MINUTES } from 'constants/timeSlots';
@@ -15,7 +14,6 @@ import type { Room, Reservation } from 'types/reservation';
 export function ReservationStatusPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const queryClient = useQueryClient();
   const [date, setDate] = useState(formatDate(new Date()));
 
   const STATUS_MESSAGES: Record<string, string> = {
@@ -37,18 +35,11 @@ export function ReservationStatusPage() {
   }, [statusFromUrl, searchParams, setSearchParams]);
 
   const { rooms, reservations } = useReservationTimeline(date);
-  const { data: myReservationList = [] } = useQuery(['myReservations'], getMyReservations);
+  const { myReservations, cancelReservationById } = useMyReservations();
 
-  const cancelMutation = useMutation((id: string) => cancelReservation(id), {
-    onSuccess: () => {
-      queryClient.invalidateQueries(['reservations']);
-      queryClient.invalidateQueries(['myReservations']);
-    },
-  });
-
-  const handleCancel = async (id: string) => {
+  const confirmAndCancelReservation = async (id: string) => {
     try {
-      await cancelMutation.mutateAsync(id);
+      await cancelReservationById(id);
       setMessage({ type: 'success', text: '예약이 취소되었습니다.' });
     } catch {
       setMessage({ type: 'error', text: '취소에 실패했습니다.' });
@@ -217,15 +208,15 @@ export function ReservationStatusPage() {
           <Text typography="t5" fontWeight="bold" color={colors.grey900}>
             내 예약
           </Text>
-          {myReservationList.length > 0 && (
+          {myReservations.length > 0 && (
             <Text typography="t7" fontWeight="medium" color={colors.grey500}>
-              {myReservationList.length}건
+              {myReservations.length}건
             </Text>
           )}
         </div>
         <Spacing size={16} />
 
-        {myReservationList.length === 0 ? (
+        {myReservations.length === 0 ? (
           <div css={css`padding: 40px 0; text-align: center; background: ${colors.grey50}; border-radius: 14px;`}>
             <Text typography="t6" color={colors.grey500}>
               예약 내역이 없습니다.
@@ -233,7 +224,7 @@ export function ReservationStatusPage() {
           </div>
         ) : (
           <div css={css`display: flex; flex-direction: column; gap: 10px;`}>
-            {myReservationList.map((res: Reservation) => (
+            {myReservations.map((res: Reservation) => (
               <div
                 key={res.id}
                 css={css`padding: 14px 16px; border-radius: 14px; background: ${colors.grey50}; border: 1px solid ${colors.grey200};`}
@@ -255,7 +246,7 @@ export function ReservationStatusPage() {
                       onClick={(e) => {
                         e.stopPropagation();
                         if (window.confirm('정말 취소하시겠습니까?')) {
-                          handleCancel(res.id);
+                          confirmAndCancelReservation(res.id);
                         }
                       }}
                     >
