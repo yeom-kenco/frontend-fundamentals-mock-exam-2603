@@ -3,9 +3,11 @@ import { Text, Spacing, Button, ListRow } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 import { EQUIPMENT_LABELS } from 'constants/equipment';
 import type { Room } from 'types/reservation';
+import { useBookingSearchParams } from '../hooks/useBookingSearchParams';
+import { useBookingValidation } from '../hooks/useBookingValidation';
+import { useAvailableRooms } from '../hooks/useAvailableRooms';
 
 interface AvailableRoomListProps {
-  rooms: Room[];
   selectedRoomId: string | null;
   onSelectRoom: (id: string) => void;
   onBook: () => void;
@@ -13,8 +15,16 @@ interface AvailableRoomListProps {
 }
 
 export function AvailableRoomList({
-  rooms, selectedRoomId, onSelectRoom, onBook, isBooking,
+  selectedRoomId, onSelectRoom, onBook, isBooking,
 }: AvailableRoomListProps) {
+  const { date, startTime, endTime, attendees, equipment, preferredFloor } = useBookingSearchParams();
+  const { isFilterComplete } = useBookingValidation({ startTime, endTime, attendees });
+  const { availableRooms } = useAvailableRooms({
+    date, startTime, endTime, attendees, equipment, preferredFloor, isFilterComplete,
+  });
+
+  if (!isFilterComplete) return null;
+
   return (
     <div css={css`padding: 0 24px;`}>
       <div css={css`display: flex; align-items: baseline; gap: 6px;`}>
@@ -22,12 +32,12 @@ export function AvailableRoomList({
           예약 가능 회의실
         </Text>
         <Text typography="t7" fontWeight="medium" color={colors.grey500}>
-          {rooms.length}개
+          {availableRooms.length}개
         </Text>
       </div>
       <Spacing size={16} />
 
-      {rooms.length === 0 ? (
+      {availableRooms.length === 0 ? (
         <div css={css`padding: 40px 0; text-align: center; background: ${colors.grey50}; border-radius: 14px;`}>
           <Text typography="t6" color={colors.grey500}>
             조건에 맞는 회의실이 없습니다.
@@ -35,7 +45,7 @@ export function AvailableRoomList({
         </div>
       ) : (
         <div css={css`display: flex; flex-direction: column; gap: 10px;`}>
-          {rooms.map(room => {
+          {availableRooms.map((room: Room) => {
             const isSelected = selectedRoomId === room.id;
             return (
               <div

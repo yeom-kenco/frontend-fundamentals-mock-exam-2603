@@ -4,10 +4,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { createReservation, queryKeys } from 'pages/remotes';
 import type { CreateReservationRequest } from 'types/reservation';
+import { useBookingSearchParams } from './useBookingSearchParams';
 
 export function useBookingSubmit() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { date, startTime, endTime, attendees, equipment } = useBookingSearchParams();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const createMutation = useMutation(
@@ -20,9 +22,25 @@ export function useBookingSubmit() {
     }
   );
 
-  const submitBooking = async (data: CreateReservationRequest) => {
+  const submitBooking = async (roomId: string | null) => {
+    if (!roomId) {
+      setErrorMessage('회의실을 선택해주세요.');
+      return { success: false as const };
+    }
+    if (!startTime || !endTime) {
+      setErrorMessage('시작 시간과 종료 시간을 선택해주세요.');
+      return { success: false as const };
+    }
+
     try {
-      const result = await createMutation.mutateAsync(data);
+      const result = await createMutation.mutateAsync({
+        roomId,
+        date,
+        start: startTime,
+        end: endTime,
+        attendees,
+        equipment,
+      });
 
       if ('ok' in result && result.ok) {
         navigate('/?status=booked');
@@ -47,7 +65,6 @@ export function useBookingSubmit() {
     submitBooking,
     isSubmitting: createMutation.isLoading,
     errorMessage,
-    setErrorMessage,
     clearError: () => setErrorMessage(null),
   };
 }
