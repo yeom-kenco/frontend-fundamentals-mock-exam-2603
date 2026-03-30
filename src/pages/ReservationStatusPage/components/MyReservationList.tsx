@@ -1,17 +1,39 @@
 import { css } from '@emotion/react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Text, Spacing, Button, ListRow } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 import { EQUIPMENT_LABELS } from 'constants/equipment';
-import type { Room, Reservation } from 'types/reservation';
+import { getRooms, getMyReservations, cancelReservation, queryKeys } from 'pages/remotes';
+import type { Room } from 'types/reservation';
 
 interface MyReservationListProps {
-  reservations: Reservation[];
-  rooms: Room[];
-  onCancelReservation: (id: string) => void;
+  onCancelSuccess: () => void;
+  onCancelError: () => void;
 }
 
-export function MyReservationList({ reservations, rooms, onCancelReservation }: MyReservationListProps) {
-  const getRoomName = (roomId: string) => rooms.find(r => r.id === roomId)?.name ?? roomId;
+export function MyReservationList({ onCancelSuccess, onCancelError }: MyReservationListProps) {
+  const queryClient = useQueryClient();
+
+  const { data: rooms = [] } = useQuery(queryKeys.rooms(), getRooms);
+  const { data: reservations = [] } = useQuery(queryKeys.myReservations(), getMyReservations);
+
+  const cancelMutation = useMutation((id: string) => cancelReservation(id), {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['reservations']);
+      queryClient.invalidateQueries(queryKeys.myReservations());
+    },
+  });
+
+  const getRoomName = (roomId: string) => rooms.find((r: Room) => r.id === roomId)?.name ?? roomId;
+
+  const confirmAndCancelReservation = async (id: string) => {
+    try {
+      await cancelMutation.mutateAsync(id);
+      onCancelSuccess();
+    } catch {
+      onCancelError();
+    }
+  };
 
   return (
     <div css={css`padding: 0 24px;`}>
@@ -57,7 +79,7 @@ export function MyReservationList({ reservations, rooms, onCancelReservation }: 
                     onClick={(e) => {
                       e.stopPropagation();
                       if (window.confirm('정말 취소하시겠습니까?')) {
-                        onCancelReservation(res.id);
+                        confirmAndCancelReservation(res.id);
                       }
                     }}
                   >
